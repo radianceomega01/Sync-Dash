@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
@@ -14,8 +15,6 @@ using UnityEngine.SceneManagement;
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
-
-    public enum GameState { Menu, Playing, Paused, GameOver }
 
     [Header("Speed / Scoring")]
     [Tooltip("Base player forward speed (units/sec).")]
@@ -53,8 +52,6 @@ public class GameManager : MonoBehaviour
     public UnityEvent OnGameResumed;
     public UnityEvent<float> OnSpeedChanged; // current speed
 
-    // Internal state
-    public GameState CurrentState { get; private set; } = GameState.Menu;
     public int HighScore { get; private set; } = 0;
 
     // Player speed accessor
@@ -62,6 +59,9 @@ public class GameManager : MonoBehaviour
 
     // Optional: expose for UI debug
     public int TotalScore => Mathf.FloorToInt(distanceAccum * distancePointFactor) + orbScore;
+
+    private PhysicsScene physicsA;
+    private PhysicsScene physicsB;
 
     private void Awake()
     {
@@ -88,8 +88,6 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        // Start at Menu. UI should call StartGame() to begin.
-        CurrentState = GameState.Menu;
         // Broadcast initial values (useful if UI queries)
         OnScoreChanged.Invoke(TotalScore);
         OnSpeedChanged.Invoke(CurrentPlayerSpeed);
@@ -97,7 +95,6 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if (CurrentState != GameState.Playing) return;
 
         // Increase speed multiplier over time (frame-rate independent)
         speedMultiplier += speedIncreasePerSecond * Time.deltaTime;
@@ -115,29 +112,26 @@ public class GameManager : MonoBehaviour
         OnSpeedChanged.Invoke(CurrentPlayerSpeed);
     }
 
+    // private void FixedUpdate()
+    // {
+    //     if (physicsA.IsValid()) physicsA.Simulate(Time.fixedDeltaTime);
+    //     if (physicsB.IsValid()) physicsB.Simulate(Time.fixedDeltaTime);
+    // }
+
     #region Public control API (UI / Scene)
     /// <summary>
     /// Called by UI to start the game from the menu.
     /// </summary>
     public void StartGame()
     {
-        // Reset state & scores
         distanceAccum = 0f;
         orbScore = 0;
         speedMultiplier = 1f;
-        CurrentState = GameState.Playing;
 
-        // If your scenes are separated, load the Game scene here (optional)
-        SceneManager.LoadScene("GamePlayPlayer", LoadSceneMode.Additive);
-        SceneManager.LoadScene("GamePlayClone", LoadSceneMode.Additive);
+        SceneManager.LoadScene("GamePlay", LoadSceneMode.Single);
 
         OnScoreChanged.Invoke(TotalScore);
         OnSpeedChanged.Invoke(CurrentPlayerSpeed);
-    }
-
-    public void OnExitGame()
-    {
-        Application.Quit();
     }
 
     /// <summary>
@@ -145,8 +139,6 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void PauseGame()
     {
-        if (CurrentState != GameState.Playing) return;
-        CurrentState = GameState.Paused;
         Time.timeScale = 0f;
         OnGamePaused.Invoke();
     }
@@ -156,8 +148,6 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void ResumeGame()
     {
-        if (CurrentState != GameState.Paused) return;
-        CurrentState = GameState.Playing;
         Time.timeScale = 1f;
         OnGameResumed.Invoke();
     }
@@ -179,7 +169,6 @@ public class GameManager : MonoBehaviour
     {
         Time.timeScale = 1f;
         // SceneManager.LoadScene("MainMenu");
-        CurrentState = GameState.Menu;
     }
 
     #endregion
@@ -192,8 +181,6 @@ public class GameManager : MonoBehaviour
     /// <param name="orbId">optional id</param>
     public void OrbCollected(int orbId = -1)
     {
-        if (CurrentState != GameState.Playing) return;
-
         orbScore += orbPoints;
 
         // Optional: play SFX or particle via other systems
@@ -207,9 +194,6 @@ public class GameManager : MonoBehaviour
     /// <param name="obstacleId"></param>
     public void PlayerHit(int obstacleId = -1)
     {
-        if (CurrentState != GameState.Playing) return;
-
-        CurrentState = GameState.GameOver;
         Time.timeScale = 1f; // ensure not paused
 
         // Final score handling

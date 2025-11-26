@@ -3,38 +3,41 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour
 {
-    public float jumpForce = 6f;
-    public LayerMask groundMask;
-    public Transform groundCheck;
+    [SerializeField] public float jumpForce = 6f;
+    [SerializeField] public LayerMask groundMask;
+    [SerializeField] public Transform groundCheck;
 
     Rigidbody rb;
     bool isGrounded;
     float syncTimer = 0f;
-    float syncInterval = 0.03f; // ~33 times per second max
+    InputSystem_Actions playerInputActions;
 
-    void Awake() => rb = GetComponent<Rigidbody>();
+    void Awake()
+    {
+        rb = GetComponent<Rigidbody>();
+        playerInputActions = new InputSystem_Actions();
+    }
 
     void OnEnable()
     {
-        InputManager.Instance.OnJumpPressed.AddListener(HandleJumpPressed);
+        playerInputActions.Enable();
+        playerInputActions.Player.Jump.performed += HandleJumpPressed;
     }
 
     void OnDisable()
     {
-        InputManager.Instance.OnJumpPressed.RemoveListener(HandleJumpPressed);
+        playerInputActions.Disable();
+        playerInputActions.Player.Jump.performed -= HandleJumpPressed;
     }
 
     void Update()
     {
-        if (GameManager.Instance.CurrentState != GameManager.GameState.Playing)
-            return;
-
         // Throttle sync messages
         syncTimer += Time.deltaTime;
-        if (syncTimer >= syncInterval)
+        if (syncTimer >= SyncManager.Instance.SyncInterval)
         {
             SyncManager.Instance.SendMessage(
-                SyncMessage.Create(transform.position, rb.linearVelocity)
+                SyncMessage.Create(transform.localPosition)
             );
             syncTimer = 0f;
         }
@@ -42,27 +45,24 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (GameManager.Instance.CurrentState != GameManager.GameState.Playing)
-            return;
-
         // get dynamic speed from GameManager
         Vector3 vel = rb.linearVelocity;
         vel.x = GameManager.Instance.CurrentPlayerSpeed;
         rb.linearVelocity = vel;
 
         // Ground check
-        isGrounded = Physics.Raycast(groundCheck.position, Vector3.down, 0.1f, groundMask);
+        isGrounded = Physics.OverlapSphere(groundCheck.position, 0.1f, groundMask).Length > 0;
     }
 
-    void HandleJumpPressed()
+    void HandleJumpPressed(UnityEngine.InputSystem.InputAction.CallbackContext ct)
     {
         if (isGrounded)
         {
             rb.AddForce(Vector3.up * jumpForce, ForceMode.VelocityChange);
 
-            SyncManager.Instance.SendMessage(
-                    SyncMessage.Create(transform.position, rb.linearVelocity, jumped: true)
-                );
+            // SyncManager.Instance.SendMessage(
+            //         SyncMessage.Create(transform.position)
+            //     );
         }
     }
 }

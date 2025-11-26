@@ -13,7 +13,7 @@ public class GhostController : MonoBehaviour
         }
 
         if (initialized)
-            transform.position = Vector3.Lerp(transform.position, targetPos, 10f * Time.deltaTime);
+            transform.localPosition = Vector3.Lerp(transform.localPosition, targetPos, 10f * Time.deltaTime);
     }
 
     void Apply(SyncMessage msg)

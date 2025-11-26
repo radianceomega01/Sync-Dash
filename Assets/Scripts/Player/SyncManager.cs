@@ -5,8 +5,9 @@ public class SyncManager : MonoBehaviour
 {
     public static SyncManager Instance;
 
-    [Range(0f, 0.2f)]
-    public float simulatedDelay = 0.05f;
+    [Range(0f, 2f)]
+    public float simulatedDelay = 0.2f;
+    public float SyncInterval { get; } = 0.03f; // ~33 times per second max
 
     Queue<SyncMessage> buffer = new Queue<SyncMessage>();
 
