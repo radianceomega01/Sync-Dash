@@ -1,24 +1,28 @@
-using UnityEngine;
 
+using UnityEngine;
+using System.Collections.Generic;
+
+[RequireComponent(typeof(Rigidbody))]
 public class GhostController : MonoBehaviour
 {
-    Vector3 targetPos;
-    bool initialized = false;
+    Rigidbody rigidBody;
+    Vector3 velocity;
+
+    void Awake()
+    {
+        rigidBody = GetComponent<Rigidbody>();
+    }
 
     void Update()
     {
         if (SyncManager.Instance.TryGetMessage(out SyncMessage msg))
         {
-            Apply(msg);
+            velocity = (msg.position - transform.localPosition) / SyncManager.Instance.SyncInterval;
         }
-
-        if (initialized)
-            transform.localPosition = Vector3.Lerp(transform.localPosition, targetPos, 10f * Time.deltaTime);
     }
-
-    void Apply(SyncMessage msg)
+    void FixedUpdate()
     {
-        targetPos = msg.position;
-        initialized = true;
+        rigidBody.linearVelocity = velocity;
     }
+
 }

@@ -14,8 +14,8 @@ public class PlayerController : MonoBehaviour
 
     void Awake()
     {
-        rb = GetComponent<Rigidbody>();
         playerInputActions = new InputSystem_Actions();
+        rb = GetComponent<Rigidbody>();
     }
 
     void OnEnable()
@@ -47,7 +47,7 @@ public class PlayerController : MonoBehaviour
     {
         // get dynamic speed from GameManager
         Vector3 vel = rb.linearVelocity;
-        vel.x = GameManager.Instance.CurrentPlayerSpeed;
+        vel.z = GameManager.Instance.CurrentPlayerSpeed;
         rb.linearVelocity = vel;
 
         // Ground check
@@ -59,10 +59,6 @@ public class PlayerController : MonoBehaviour
         if (isGrounded)
         {
             rb.AddForce(Vector3.up * jumpForce, ForceMode.VelocityChange);
-
-            // SyncManager.Instance.SendMessage(
-            //         SyncMessage.Create(transform.position)
-            //     );
         }
     }
 }

@@ -2,14 +2,13 @@ using UnityEngine;
 
 public class Obstacle : MonoBehaviour
 {
-    public int id;
-    public Animator dissolveAnimator;
+    [SerializeField] private Animator dissolveAnimator;
 
     private void OnTriggerEnter(Collider other)
     {
         if (!other.CompareTag("Player")) return;
 
-        GameManager.Instance.PlayerHit(id);
+        GameManager.Instance.PlayerHit();
 
         if (dissolveAnimator != null)
             dissolveAnimator.SetTrigger("Dissolve");

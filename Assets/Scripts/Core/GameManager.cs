@@ -33,24 +33,16 @@ public class GameManager : MonoBehaviour
     public float distancePointFactor = 1f; // e.g., every unit distance = 1 point
 
     [Header("Score")]
-    [SerializeField] // ReadOnly is optional attribute from many editors; ignore if not present
+    [SerializeField]
     private float distanceAccum = 0f;
     [SerializeField]
     private int orbScore = 0;
 
-    [Header("Gameplay")]
-    [Tooltip("If true, distance accumulates even when player is not moving (helpful for debugging).")]
-    public bool accumulateDistance = true;
-
     [Tooltip("Maximum speed multiplier (cap).")]
     public float maxSpeedMultiplier = 3f;
 
-    [Header("Events")]
-    public UnityEvent<int> OnScoreChanged; // int = total score
-    public UnityEvent OnGameOver;          // triggered when player hits obstacle
-    public UnityEvent OnGamePaused;
-    public UnityEvent OnGameResumed;
-    public UnityEvent<float> OnSpeedChanged; // current speed
+    public event Action OnGameOver;          // triggered when player hits obstacle
+    public event Action<float> OnSpeedChanged; // current speed
 
     public int HighScore { get; private set; } = 0;
 
@@ -59,9 +51,6 @@ public class GameManager : MonoBehaviour
 
     // Optional: expose for UI debug
     public int TotalScore => Mathf.FloorToInt(distanceAccum * distancePointFactor) + orbScore;
-
-    private PhysicsScene physicsA;
-    private PhysicsScene physicsB;
 
     private void Awake()
     {
@@ -79,18 +68,6 @@ public class GameManager : MonoBehaviour
 
         // Initialize
         LoadHighScore();
-        if (OnScoreChanged == null) OnScoreChanged = new UnityEvent<int>();
-        if (OnGameOver == null) OnGameOver = new UnityEvent();
-        if (OnGamePaused == null) OnGamePaused = new UnityEvent();
-        if (OnGameResumed == null) OnGameResumed = new UnityEvent();
-        if (OnSpeedChanged == null) OnSpeedChanged = new UnityEvent<float>();
-    }
-
-    private void Start()
-    {
-        // Broadcast initial values (useful if UI queries)
-        OnScoreChanged.Invoke(TotalScore);
-        OnSpeedChanged.Invoke(CurrentPlayerSpeed);
     }
 
     private void Update()
@@ -100,23 +77,11 @@ public class GameManager : MonoBehaviour
         speedMultiplier += speedIncreasePerSecond * Time.deltaTime;
         speedMultiplier = Mathf.Min(speedMultiplier, maxSpeedMultiplier);
 
-        // Accumulate distance as score driver
-        if (accumulateDistance)
-        {
-            // distanceAccum grows by the player's current forward velocity * dt
-            distanceAccum += CurrentPlayerSpeed * Time.deltaTime;
-        }
+        // distanceAccum grows by the player's current forward velocity * dt
+        distanceAccum += CurrentPlayerSpeed * Time.deltaTime;
 
-        // Notify subscribers about updated score & speed occasionally (every frame keeps it simple)
-        OnScoreChanged.Invoke(TotalScore);
-        OnSpeedChanged.Invoke(CurrentPlayerSpeed);
+        OnSpeedChanged?.Invoke(CurrentPlayerSpeed);
     }
-
-    // private void FixedUpdate()
-    // {
-    //     if (physicsA.IsValid()) physicsA.Simulate(Time.fixedDeltaTime);
-    //     if (physicsB.IsValid()) physicsB.Simulate(Time.fixedDeltaTime);
-    // }
 
     #region Public control API (UI / Scene)
     /// <summary>
@@ -129,27 +94,7 @@ public class GameManager : MonoBehaviour
         speedMultiplier = 1f;
 
         SceneManager.LoadScene("GamePlay", LoadSceneMode.Single);
-
-        OnScoreChanged.Invoke(TotalScore);
         OnSpeedChanged.Invoke(CurrentPlayerSpeed);
-    }
-
-    /// <summary>
-    /// Pause the gameplay (freezes time scale).
-    /// </summary>
-    public void PauseGame()
-    {
-        Time.timeScale = 0f;
-        OnGamePaused.Invoke();
-    }
-
-    /// <summary>
-    /// Resume from pause.
-    /// </summary>
-    public void ResumeGame()
-    {
-        Time.timeScale = 1f;
-        OnGameResumed.Invoke();
     }
 
     /// <summary>
@@ -157,8 +102,6 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void Restart()
     {
-        Time.timeScale = 1f;
-        // Optionally reload the scene
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
@@ -167,8 +110,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void GoToMainMenu()
     {
-        Time.timeScale = 1f;
-        // SceneManager.LoadScene("MainMenu");
+        SceneManager.LoadScene("MainMenu");
     }
 
     #endregion
@@ -178,24 +120,17 @@ public class GameManager : MonoBehaviour
     /// <summary>
     /// Called by Orb when collected.
     /// </summary>
-    /// <param name="orbId">optional id</param>
-    public void OrbCollected(int orbId = -1)
+    public void OrbCollected()
     {
         orbScore += orbPoints;
-
-        // Optional: play SFX or particle via other systems
-        OnScoreChanged.Invoke(TotalScore);
     }
 
     /// <summary>
     /// Called when the player collides with obstacle.
     /// Triggers game over flow.
     /// </summary>
-    /// <param name="obstacleId"></param>
-    public void PlayerHit(int obstacleId = -1)
+    public void PlayerHit()
     {
-        Time.timeScale = 1f; // ensure not paused
-
         // Final score handling
         int finalScore = TotalScore;
         if (finalScore > HighScore)
@@ -205,16 +140,13 @@ public class GameManager : MonoBehaviour
         }
 
         // Broadcast game over for UI / analytics
-        OnGameOver.Invoke();
-
-        // Optionally, show GameOver UI or transition to GameOver scene
-        // SceneManager.LoadScene("GameOver");
+        OnGameOver?.Invoke();
     }
 
     #endregion
 
     #region Persistence (High Score)
-    private const string PREF_HIGH_SCORE = "SyncDash_HighScore_v1";
+    private const string PREF_HIGH_SCORE = "SyncDash_HighScore";
 
     private void SaveHighScore()
     {

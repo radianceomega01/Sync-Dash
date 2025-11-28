@@ -1,3 +1,4 @@
+
 using UnityEngine;
 
 /// <summary>
@@ -6,25 +7,19 @@ using UnityEngine;
 /// </summary>
 public class CameraFollow : MonoBehaviour
 {
-    [Header("Target")]
-    public Transform target;
+    [SerializeField] private Transform target;
+    [SerializeField] private float zOffset = 3.5f;
+    private Vector3 initialOffset;
 
-    [Header("Follow Settings")]
-    [Tooltip("Offset relative to target (local space).")]
-    public Vector3 followOffset = new Vector3(-2f, 2f, 0f); // slightly behind + above
-
-    [Tooltip("Smoothing factor (higher = snappier, lower = floaty).")]
-    [Range(1f, 20f)]
-    public float followSmoothness = 10f;
-
+    void Start()
+    {
+        initialOffset = transform.localPosition;
+    }
     void LateUpdate()
     {
         if (target == null) return;
 
-        // Desired camera position based on target
-        Vector3 targetPos = target.position + followOffset;
-
         // Smoothly interpolate to target position
-        transform.position = Vector3.Lerp(transform.position, targetPos, followSmoothness * Time.deltaTime);
+        transform.localPosition = target.localPosition + initialOffset + new Vector3(0, 0, zOffset);
     }
 }

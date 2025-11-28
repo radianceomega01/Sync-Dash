@@ -2,14 +2,13 @@ using UnityEngine;
 
 public class Orb : MonoBehaviour
 {
-    public int id;
-    public ParticleSystem collectFx;
+    [SerializeField] private ParticleSystem collectFx;
 
     private void OnTriggerEnter(Collider other)
     {
         if (!other.CompareTag("Player")) return;
 
-        GameManager.Instance.OrbCollected(id);
+        GameManager.Instance.OrbCollected();
 
         if (collectFx != null)
             collectFx.Play();

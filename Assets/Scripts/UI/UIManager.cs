@@ -4,35 +4,29 @@ using UnityEngine.SceneManagement;
 
 public class UIManager : MonoBehaviour
 {
-    public static UIManager Instance;
 
     [Header("Text References")]
-    public Text scoreText;
-    public Text highScoreText;
+    [SerializeField] private Text scoreText;
+    [SerializeField] private Text highScoreText;
 
     [Header("Panels")]
-    public GameObject gamePanel;
-    public GameObject gameOverPanel;
-    public GameObject menuPanel;
+    [SerializeField] private GameObject gameOverPanel;
 
     private void Awake()
     {
-        if (Instance == null) Instance = this;
-        else Destroy(gameObject);
+        
     }
 
     private void OnEnable()
     {
         // Subscribe to GameManager events
-        GameManager.Instance.OnScoreChanged.AddListener(UpdateScore);
-        GameManager.Instance.OnGameOver.AddListener(ShowGameOverScreen);
+        GameManager.Instance.OnGameOver += ShowGameOverScreen;
     }
 
     private void OnDisable()
     {
         // Unsubscribe to avoid memory leaks
-        GameManager.Instance.OnScoreChanged.RemoveListener(UpdateScore);
-        GameManager.Instance.OnGameOver.RemoveListener(ShowGameOverScreen);
+        GameManager.Instance.OnGameOver -= ShowGameOverScreen;
     }
 
     private void Start()
@@ -44,10 +38,7 @@ public class UIManager : MonoBehaviour
 
     public void StartGameButton()
     {
-        gamePanel.SetActive(true);
-        menuPanel.SetActive(false);
         gameOverPanel.SetActive(false);
-
         GameManager.Instance.StartGame();
     }
 
@@ -64,16 +55,11 @@ public class UIManager : MonoBehaviour
 
     void ShowMenu()
     {
-        menuPanel.SetActive(true);
-        gameOverPanel.SetActive(false);
-        gamePanel.SetActive(false);
-
-        highScoreText.text = "HIGH SCORE: " + GameManager.Instance.HighScore;
+        SceneManager.LoadScene("MainMenu");
     }
 
     void ShowGameOverScreen()
     {
-        gamePanel.SetActive(false);
         gameOverPanel.SetActive(true);
         highScoreText.text = "HIGH SCORE: " + GameManager.Instance.HighScore;
     }
