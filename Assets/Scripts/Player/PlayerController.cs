@@ -46,9 +46,9 @@ public class PlayerController : MonoBehaviour
     void FixedUpdate()
     {
         // get dynamic speed from GameManager
-        Vector3 vel = rb.linearVelocity;
+        Vector3 vel = rb.velocity;
         vel.z = GameManager.Instance.CurrentPlayerSpeed;
-        rb.linearVelocity = vel;
+        rb.velocity = vel;
 
         // Ground check
         isGrounded = Physics.OverlapSphere(groundCheck.position, 0.1f, groundMask).Length > 0;

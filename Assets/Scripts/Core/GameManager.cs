@@ -94,7 +94,7 @@ public class GameManager : MonoBehaviour
         speedMultiplier = 1f;
 
         SceneManager.LoadScene("GamePlay", LoadSceneMode.Single);
-        OnSpeedChanged.Invoke(CurrentPlayerSpeed);
+        OnSpeedChanged?.Invoke(CurrentPlayerSpeed);
     }
 
     /// <summary>

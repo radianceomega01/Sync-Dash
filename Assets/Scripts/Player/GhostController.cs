@@ -22,7 +22,7 @@ public class GhostController : MonoBehaviour
     }
     void FixedUpdate()
     {
-        rigidBody.linearVelocity = velocity;
+        rigidBody.velocity = velocity;
     }
 
 }
