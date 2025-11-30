@@ -1,21 +1,17 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using TMPro;
 
 public class UIManager : MonoBehaviour
 {
 
     [Header("Text References")]
-    [SerializeField] private Text scoreText;
-    [SerializeField] private Text highScoreText;
+    [SerializeField] private TextMeshProUGUI scoreText;
+    [SerializeField] private TextMeshProUGUI highScoreText;
 
     [Header("Panels")]
     [SerializeField] private GameObject gameOverPanel;
-
-    private void Awake()
-    {
-        
-    }
 
     private void OnEnable()
     {
@@ -29,39 +25,26 @@ public class UIManager : MonoBehaviour
         GameManager.Instance.OnGameOver -= ShowGameOverScreen;
     }
 
-    private void Start()
-    {
-        ShowMenu();
-    }
-
-    // ---- UI Callbacks ----
-
-    public void StartGameButton()
+    public void RestartButtonClicked()
     {
         gameOverPanel.SetActive(false);
-        GameManager.Instance.StartGame();
-    }
-
-    public void RestartButton()
-    {
         GameManager.Instance.Restart();
     }
 
-    public void MenuButton()
+    public void MenuButtonClicked()
     {
         GameManager.Instance.GoToMainMenu();
-        ShowMenu();
-    }
-
-    void ShowMenu()
-    {
-        SceneManager.LoadScene("MainMenu");
     }
 
     void ShowGameOverScreen()
     {
+        highScoreText.text = string.Join("", "High Score: ", GameManager.Instance.HighScore);
         gameOverPanel.SetActive(true);
-        highScoreText.text = "HIGH SCORE: " + GameManager.Instance.HighScore;
+    }
+
+    void FixedUpdate()
+    {
+        UpdateScore(GameManager.Instance.TotalScore);
     }
 
     // ---- Score UI ----

@@ -22,17 +22,19 @@ public class PlayerController : MonoBehaviour
     {
         playerInputActions.Enable();
         playerInputActions.Player.Jump.performed += HandleJumpPressed;
+        GameManager.Instance.OnGameOver += GameOver;
     }
 
     void OnDisable()
     {
         playerInputActions.Disable();
         playerInputActions.Player.Jump.performed -= HandleJumpPressed;
+        GameManager.Instance.OnGameOver -= GameOver;
     }
 
     void Update()
     {
-        // Throttle sync messages
+        //Throttle sync messages
         syncTimer += Time.deltaTime;
         if (syncTimer >= SyncManager.Instance.SyncInterval)
         {
@@ -45,6 +47,8 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (rb.isKinematic) return;
+
         // get dynamic speed from GameManager
         Vector3 vel = rb.velocity;
         vel.z = GameManager.Instance.CurrentPlayerSpeed;
@@ -52,6 +56,7 @@ public class PlayerController : MonoBehaviour
 
         // Ground check
         isGrounded = Physics.OverlapSphere(groundCheck.position, 0.1f, groundMask).Length > 0;
+
     }
 
     void HandleJumpPressed(UnityEngine.InputSystem.InputAction.CallbackContext ct)
@@ -60,5 +65,11 @@ public class PlayerController : MonoBehaviour
         {
             rb.AddForce(Vector3.up * jumpForce, ForceMode.VelocityChange);
         }
+    }
+
+    void GameOver()
+    {
+        rb.useGravity = false;
+        rb.isKinematic = true;
     }
 }

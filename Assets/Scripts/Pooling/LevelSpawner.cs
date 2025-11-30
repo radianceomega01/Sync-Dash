@@ -41,6 +41,7 @@ public class LevelSpawner : MonoBehaviour
         Hurdle hurdle = other.GetComponentInParent<Hurdle>();
         int id = hurdle.ID;
         hurdlePools[id].Return(hurdle.gameObject);
+        hurdle.ResetOrbVisibility();
     }
 
     private void SpawnRandomHurdle()

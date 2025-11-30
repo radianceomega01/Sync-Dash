@@ -23,23 +23,24 @@ public class GameManager : MonoBehaviour
     [Tooltip("Multiplier applied on top of baseSpeed (starts at 1).")]
     public float speedMultiplier = 1f;
 
-    [Tooltip("How much the multiplier grows per second while playing.")]
-    public float speedIncreasePerSecond = 0.01f;
+    [Header("Speed Increase Settings")]
+    [Tooltip("Increase speed every X seconds.")]
+    public float speedIncreaseInterval = 10f;
+
+    [Tooltip("Amount added to speedMultiplier every interval.")]
+    public float speedIncreaseAmount = 0.2f;
+
+    [Tooltip("Maximum speed multiplier (cap).")]
+    public float maxSpeedMultiplier = 2f;
 
     [Tooltip("Points awarded per orb collected.")]
     public int orbPoints = 10;
-
-    [Tooltip("Points multiplier applied to distance -> int score.")]
-    public float distancePointFactor = 1f; // e.g., every unit distance = 1 point
 
     [Header("Score")]
     [SerializeField]
     private float distanceAccum = 0f;
     [SerializeField]
     private int orbScore = 0;
-
-    [Tooltip("Maximum speed multiplier (cap).")]
-    public float maxSpeedMultiplier = 3f;
 
     public event Action OnGameOver;          // triggered when player hits obstacle
     public event Action<float> OnSpeedChanged; // current speed
@@ -50,7 +51,9 @@ public class GameManager : MonoBehaviour
     public float CurrentPlayerSpeed => baseSpeed * speedMultiplier;
 
     // Optional: expose for UI debug
-    public int TotalScore => Mathf.FloorToInt(distanceAccum * distancePointFactor) + orbScore;
+    public int TotalScore => Mathf.FloorToInt(distanceAccum) + orbScore;
+    private bool isGameOver = false;
+    private Coroutine speedRoutine;
 
     private void Awake()
     {
@@ -70,15 +73,19 @@ public class GameManager : MonoBehaviour
         LoadHighScore();
     }
 
+    void Start()
+    {
+        Application.targetFrameRate = 60;
+        speedRoutine = StartCoroutine(SpeedIncreaseRoutine());
+    }
+
     private void Update()
     {
-
-        // Increase speed multiplier over time (frame-rate independent)
-        speedMultiplier += speedIncreasePerSecond * Time.deltaTime;
-        speedMultiplier = Mathf.Min(speedMultiplier, maxSpeedMultiplier);
-
         // distanceAccum grows by the player's current forward velocity * dt
-        distanceAccum += CurrentPlayerSpeed * Time.deltaTime;
+        if (!isGameOver)
+        {
+            distanceAccum += CurrentPlayerSpeed * Time.deltaTime;
+        }
 
         OnSpeedChanged?.Invoke(CurrentPlayerSpeed);
     }
@@ -89,12 +96,9 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void StartGame()
     {
-        distanceAccum = 0f;
-        orbScore = 0;
-        speedMultiplier = 1f;
+        ResetParams();
 
         SceneManager.LoadScene("GamePlay", LoadSceneMode.Single);
-        OnSpeedChanged?.Invoke(CurrentPlayerSpeed);
     }
 
     /// <summary>
@@ -102,6 +106,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void Restart()
     {
+        ResetParams();
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
@@ -110,6 +115,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void GoToMainMenu()
     {
+        ResetParams();
         SceneManager.LoadScene("MainMenu");
     }
 
@@ -140,6 +146,7 @@ public class GameManager : MonoBehaviour
         }
 
         // Broadcast game over for UI / analytics
+        isGameOver = true;
         OnGameOver?.Invoke();
     }
 
@@ -157,6 +164,26 @@ public class GameManager : MonoBehaviour
     private void LoadHighScore()
     {
         HighScore = PlayerPrefs.GetInt(PREF_HIGH_SCORE, 0);
+    }
+    private IEnumerator SpeedIncreaseRoutine()
+    {
+        while (!isGameOver)
+        {
+            yield return new WaitForSeconds(speedIncreaseInterval);
+
+            speedMultiplier += speedIncreaseAmount;
+            speedMultiplier = Mathf.Min(speedMultiplier, maxSpeedMultiplier);
+
+            OnSpeedChanged?.Invoke(CurrentPlayerSpeed);
+        }
+    }
+
+    private void ResetParams()
+    {
+        distanceAccum = 0f;
+        orbScore = 0;
+        speedMultiplier = 1f;
+        isGameOver = false;
     }
     #endregion
 }

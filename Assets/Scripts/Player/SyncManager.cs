@@ -17,7 +17,6 @@ public class SyncManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject); // keep across scenes if needed
         }
         else
         {

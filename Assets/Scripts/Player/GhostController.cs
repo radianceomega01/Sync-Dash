@@ -19,6 +19,7 @@ public class GhostController : MonoBehaviour
         {
             velocity = (msg.position - transform.localPosition) / SyncManager.Instance.SyncInterval;
         }
+        
     }
     void FixedUpdate()
     {

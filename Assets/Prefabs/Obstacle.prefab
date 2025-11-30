@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 7729245166475824628}
   - component: {fileID: 637136866328693184}
   - component: {fileID: 6573338383759117072}
+  - component: {fileID: 3291749487331201509}
   m_Layer: 0
   m_Name: Obstacle
   m_TagString: Untagged
@@ -59,9 +60,6 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -110,3 +108,16 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
+--- !u!114 &3291749487331201509
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7571582734348306571}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 976fb75cc828b0c4c840ba8abd3182c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dissolveAnimator: {fileID: 0}

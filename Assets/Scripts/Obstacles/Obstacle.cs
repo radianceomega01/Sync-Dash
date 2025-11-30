@@ -4,10 +4,14 @@ public class Obstacle : MonoBehaviour
 {
     [SerializeField] private Animator dissolveAnimator;
 
-    private void OnTriggerEnter(Collider other)
+    private void OnCollisionEnter(Collision other)
     {
-        if (!other.CompareTag("Player")) return;
-
+        CollisionResponder responder = other.gameObject.GetComponent<CollisionResponder>();
+        if (responder != null)
+        {
+            responder.OnCollided();
+        }
+        
         GameManager.Instance.PlayerHit();
 
         if (dissolveAnimator != null)
